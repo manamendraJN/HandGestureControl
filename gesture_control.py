@@ -1,6 +1,8 @@
 import cv2
 import mediapipe as mp
 import pyautogui
+import math
+import time
 
 # Set PyAutoGUI to fail-safe mode
 pyautogui.FAILSAFE = True
@@ -27,6 +29,10 @@ def main():
         return
     frame_height, frame_width, _ = frame.shape
 
+    # Click state
+    last_click_time = 0
+    click_cooldown = 0.5  # Seconds between clicks
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -43,19 +49,33 @@ def main():
         # Draw hand landmarks and control mouse
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                mp
 
-                # Get index finger tip coordinates (landmark 8)
+_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+                # Get index finger tip (landmark 8) and thumb tip (landmark 4)
                 index_tip = hand_landmarks.landmark[8]
-                x = int(index_tip.x * frame_width)
-                y = int(index_tip.y * frame_height)
+                thumb_tip = hand_landmarks.landmark[4]
 
-                # Map to screen coordinates
+                # Convert to pixel coordinates
+                x_index = int(index_tip.x * frame_width)
+                y_index = int(index_tip.y * frame_height)
+                x_thumb = int(thumb_tip.x * frame_width)
+                y_thumb = int(thumb_tip.y * frame_height)
+
+                # Map index finger to screen coordinates for mouse movement
                 screen_x = int(index_tip.x * screen_width)
                 screen_y = int(index_tip.y * screen_height)
-
-                # Move mouse
                 pyautogui.moveTo(screen_x, screen_y)
+
+                # Calculate distance between index and thumb
+                distance = math.hypot(x_index - x_thumb, y_index - y_thumb)
+
+                # Perform click if fingers are close
+                current_time = time.time()
+                if distance < 30 and (current_time - last_click_time) > click_cooldown:
+                    pyautogui.click()
+                    last_click_time = current_time
 
         # Display the frame
         cv2.imshow('Hand Tracking', frame)
