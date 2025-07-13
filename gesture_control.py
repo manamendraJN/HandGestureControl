@@ -14,6 +14,7 @@ def count_fingers(hand_landmarks, frame_width, frame_height):
     finger_tips = [4, 8, 12, 16, 20]
     finger_mcp = [2, 5, 9, 13, 17]
     raised_fingers = 0
+
     for tip, mcp in zip(finger_tips, finger_mcp):
         tip_y = hand_landmarks.landmark[tip].y * frame_height
         mcp_y = hand_landmarks.landmark[mcp].y * frame_height
@@ -55,7 +56,13 @@ def main():
 
     # State variables
     last_click_time = 0
-    click_cooldown = 0.5  # Seconds between clicks (single or double)
+    click_cooldown = 0.5  # Seconds between clicks
+    smooth_factor = 0.5   # Smoothing factor for mouse movement
+    prev_screen_x, prev_screen_y = None, None  # For smoothing
+
+    # Define region of interest (ROI) for mouse movement (normalized coordinates)
+    x_min, x_max = 0.2, 0.8  # Limit x-range to 20%-80% of frame
+    y_min, y_max = 0.2, 0.8  # Limit y-range to 20%-80% of frame
 
     while True:
         ret, frame = cap.read()
@@ -83,38 +90,52 @@ def main():
                 # Get index finger tip (8)
                 index_tip = hand_landmarks.landmark[8]
 
-                # Convert to pixel coordinates
-                x_index = int(index_tip.x * frame_width)
-                y_index = int(index_tip.y * frame_height)
-
                 # Count raised fingers
                 finger_count = count_fingers(hand_landmarks, frame_width, frame_height)
 
-                # Map index finger to screen coordinates
-                screen_x = int(index_tip.x * screen_width)
-                screen_y = int(index_tip.y * screen_height)
+                # Map index finger to screen coordinates with ROI scaling
+                x_norm = index_tip.x  # Normalized x (0.0 to 1.0)
+                y_norm = index_tip.y  # Normalized y (0.0 to 1.0)
 
-                current_time = time.time()
+                # Scale normalized coordinates to ROI
+                if x_min <= x_norm <= x_max and y_min <= y_norm <= y_max:
+                    # Map ROI coordinates to screen coordinates
+                    screen_x = int((x_norm - x_min) / (x_max - x_min) * screen_width)
+                    screen_y = int((y_norm - y_min) / (y_max - y_min) * screen_height)
 
-                # No action if fist
-                if finger_count == 0:
-                    continue
+                    # Apply smoothing
+                    if prev_screen_x is None or prev_screen_y is None:
+                        prev_screen_x, prev_screen_y = screen_x, screen_y
+                    else:
+                        screen_x = int(prev_screen_x * smooth_factor + screen_x * (1 - smooth_factor))
+                        screen_y = int(prev_screen_y * smooth_factor + screen_y * (1 - smooth_factor))
+                        prev_screen_x, prev_screen_y = screen_x, screen_y
 
-                # Actions based on finger count
-                if finger_count == 1:  # Move mouse
-                    pyautogui.moveTo(screen_x, screen_y)
+                    current_time = time.time()
 
-                elif finger_count == 2:  # Single click
-                    if (current_time - last_click_time) > click_cooldown:
-                        pyautogui.click()
-                        last_click_time = current_time
-                        cv2.circle(frame, (x_index, y_index), 10, (0, 255, 0), -1)  # Visual feedback
+                    # No action if fist
+                    if finger_count == 0:
+                        continue
 
-                elif finger_count == 3:  # Double click
-                    if (current_time - last_click_time) > click_cooldown:
-                        pyautogui.doubleClick()
-                        last_click_time = current_time
-                        cv2.circle(frame, (x_index, y_index), 10, (0, 255, 0), -1)  # Visual feedback
+                    # Actions based on finger count
+                    if finger_count == 1:  # Move mouse
+                        pyautogui.moveTo(screen_x, screen_y)
+
+                    elif finger_count == 2:  # Single click
+                        if (current_time - last_click_time) > click_cooldown:
+                            pyautogui.click()
+                            last_click_time = current_time
+                            cv2.circle(frame, (x_index, y_index), 10, (0, 255, 0), -1)  # Visual feedback
+
+                    elif finger_count == 3:  # Double click
+                        if (current_time - last_click_time) > click_cooldown:
+                            pyautogui.doubleClick()
+                            last_click_time = current_time
+                            cv2.circle(frame, (x_index, y_index), 10, (0, 255, 0), -1)  # Visual feedback
+
+                # Convert index tip to pixel coordinates for visual feedback
+                x_index = int(index_tip.x * frame_width)
+                y_index = int(index_tip.y * frame_height)
 
         # Display the frame
         cv2.imshow('Hand Tracking', frame)
