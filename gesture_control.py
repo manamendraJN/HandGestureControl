@@ -49,9 +49,7 @@ def main():
         # Draw hand landmarks and control mouse
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                mp
-
-_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
                 # Get index finger tip (landmark 8) and thumb tip (landmark 4)
                 index_tip = hand_landmarks.landmark[8]
