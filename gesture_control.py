@@ -29,9 +29,11 @@ def main():
         return
     frame_height, frame_width, _ = frame.shape
 
-    # Click state
+    # Click and key press state
     last_click_time = 0
+    last_key_time = 0
     click_cooldown = 0.5  # Seconds between clicks
+    key_cooldown = 0.2    # Seconds between key presses
 
     while True:
         ret, frame = cap.read()
@@ -46,34 +48,57 @@ def main():
         # Process frame for hand detection
         results = hands.process(frame_rgb)
 
-        # Draw hand landmarks and control mouse
+        # Draw hand landmarks and control mouse/keyboard
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-                # Get index finger tip (landmark 8) and thumb tip (landmark 4)
+                # Get landmarks for index finger tip (8), thumb tip (4), and wrist (0)
                 index_tip = hand_landmarks.landmark[8]
                 thumb_tip = hand_landmarks.landmark[4]
+                wrist = hand_landmarks.landmark[0]
 
                 # Convert to pixel coordinates
                 x_index = int(index_tip.x * frame_width)
                 y_index = int(index_tip.y * frame_height)
                 x_thumb = int(thumb_tip.x * frame_width)
                 y_thumb = int(thumb_tip.y * frame_height)
+                x_wrist = int(wrist.x * frame_width)
+                y_wrist = int(wrist.y * frame_height)
 
                 # Map index finger to screen coordinates for mouse movement
                 screen_x = int(index_tip.x * screen_width)
                 screen_y = int(index_tip.y * screen_height)
                 pyautogui.moveTo(screen_x, screen_y)
 
-                # Calculate distance between index and thumb
+                # Calculate distance for click
                 distance = math.hypot(x_index - x_thumb, y_index - y_thumb)
+                current_time = time.time()
 
                 # Perform click if fingers are close
-                current_time = time.time()
                 if distance < 30 and (current_time - last_click_time) > click_cooldown:
                     pyautogui.click()
                     last_click_time = current_time
+
+                # Calculate hand tilt for arrow keys
+                delta_x = x_index - x_wrist
+                delta_y = y_index - y_wrist
+                angle = math.degrees(math.atan2(delta_y, delta_x))
+
+                # Press arrow keys based on hand tilt
+                if (current_time - last_key_time) > key_cooldown:
+                    if 45 <= angle < 135:
+                        pyautogui.press('up')
+                        last_key_time = current_time
+                    elif -135 <= angle < -45:
+                        pyautogui.press('down')
+                        last_key_time = current_time
+                    elif -45 <= angle < 45:
+                        pyautogui.press('right')
+                        last_key_time = current_time
+                    elif 135 <= angle or angle < -135:
+                        pyautogui.press('left')
+                        last_key_time = current_time
 
         # Display the frame
         cv2.imshow('Hand Tracking', frame)
