@@ -4,9 +4,13 @@ Welcome to HandGestureControl, a cutting-edge Python project that lets you contr
 
 🎯 Features
 Intuitive Gestures (Right Hand Only):
+
      Fist (0 fingers): No action, keeping things idle.
+     
      1 finger (index): Move the mouse cursor smoothly across your entire 1920x1080 screen with adjustable speed.
+     
      2 fingers (index + middle): Trigger a single left-click with a vibrant green circle as visual feedback.
+     
      3 fingers (index + middle + ring): Perform a double left-click with the same cool visual cue.
 
 
@@ -32,17 +36,23 @@ Get up and running in just a few steps!
 
 1.Clone the Repository:
 
-Open GitHub Desktop and clone the project to D:\Github-Projects\HandGestureControl:git clone https://github.com/<your-username>/HandGestureControl.git
-cd HandGestureControl
+Open GitHub Desktop and clone the project :
+
+     https://github.com/<your-username>/HandGestureControl.git
+     cd HandGestureControl
 
 2.Set Up Virtual Environment:
-python -m venv venv
+     
+     python -m venv venv
 
-3.Activate it on Windows:venv\Scripts\activate
+3.Activate it on Windows:     
+
+     venv\Scripts\activate
 
 4.Install Dependencies:
-pip install opencv-python mediapipe pyautogui pygetwindow pywin32
-pip freeze > requirements.txt
+
+     pip install opencv-python mediapipe pyautogui pygetwindow pywin32
+     pip freeze > requirements.txt
 
 🎮 Usage
 
@@ -50,7 +60,9 @@ Launch the Script:
 
 1.Open the project in VS Code
 
-2.Run the magic:python gesture_control.py
+2.Run the magic:
+     
+     python gesture_control.py
 
 🛠️ Customization & Troubleshooting
 
