@@ -38,7 +38,7 @@ Get up and running in just a few steps!
 
 Open GitHub Desktop and clone the project :
 
-     https://github.com/<your-username>/HandGestureControl.git
+     https://github.com/manamendraJN/HandGestureControl
      cd HandGestureControl
 
 2.Set Up Virtual Environment:
